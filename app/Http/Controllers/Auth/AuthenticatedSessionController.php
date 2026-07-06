@@ -2,43 +2,41 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Actions\Auth\LoginAction;
+use App\Actions\Auth\RedirectAuthenticatedUserAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
-use Illuminate\Support\Facades\Route;
+use Inertia\Response;
 
 class AuthenticatedSessionController extends Controller
 {
-    public function create()
+    public function create(): Response
     {
         return Inertia::render('Auth/Login', [
-            'canResetPassword' => Route::has('password.request'),
+            'canResetPassword' => false,
             'status' => session('status'),
         ]);
     }
 
-    public function store(LoginRequest $request, LoginAction $action)
+    public function store(LoginRequest $request, RedirectAuthenticatedUserAction $redirectAuthenticatedUser): RedirectResponse
     {
-        $action->execute(
-            $request->email(),
-            $request->password(),
-            $request->remember(),
-            $request->ipAddress(),
-        );
+        $request->authenticate();
 
         $request->session()->regenerate();
 
-        // Flash para toast global si quieres
-        return redirect()->intended(route('dashboard'))
-            ->with('flash', ['type' => 'success', 'message' => 'Bienvenido.']);
+        return $redirectAuthenticatedUser($request);
     }
 
-    public function destroy(Request $request)
+    public function destroy(Request $request): RedirectResponse
     {
-        Auth::logout();
+        $request->session()->forget([
+            'office_id',
+            'company_id',
+        ]);
+
+        auth()->guard('web')->logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

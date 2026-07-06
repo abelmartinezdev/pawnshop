@@ -17,7 +17,6 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
-        // ✅ Alias para usarlo en rutas: 'ensure_branch'
         $middleware->alias([
             'force_password' => \App\Http\Middleware\ForcePasswordChange::class,
             'ensure_office' => \App\Http\Middleware\EnsureCurrentOffice::class,

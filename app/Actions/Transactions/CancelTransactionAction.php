@@ -2,43 +2,60 @@
 
 namespace App\Actions\Transactions;
 
-use App\Modules\Pawns\PawnsRepo;
-use App\Modules\Transactions\Transaction;
-use App\Modules\Transactions\TransactionsRepo;
-use Illuminate\Http\Request;
+use App\Http\Requests\Transactions\CancelTransactionRequest;
+use App\Models\Office;
+use App\Models\Transaction;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 
 class CancelTransactionAction
 {
-    public function __construct(
-        private TransactionsRepo $transactions,
-        private PawnsRepo $pawnsRepo
-    ) {}
-
-    public function __invoke(Request $request, int $id)
+    public function __invoke(int $id, CancelTransactionRequest $request): RedirectResponse
     {
-        \Pawnshop::verifyLastClosing();
+        $officeId = session('office_id') ?: $request->user()?->office_id;
 
-        $request->validate([
-            'comments_cancel' => 'required|string|min:3',
-        ]);
+        abort_unless($officeId, 404, 'No hay una sucursal activa.');
 
-        $transaction = Transaction::findOrFail($id);
+        DB::transaction(function () use ($id, $request, $officeId) {
+            /** @var Transaction $transaction */
+            $transaction = Transaction::query()
+                ->where('office_id', $officeId)
+                ->lockForUpdate()
+                ->findOrFail($id);
 
-        if (!$transaction->mayBeCanceled()) {
-            return back()->withErrors(['comments_cancel' => 'No puedes cancelar esta transacción.']);
-        }
+            if ($transaction->canceled_at) {
+                return;
+            }
 
-        $comments = 'Cancelación de ' . trans('core.transaction_types.' . $transaction->type)
-            . ' - ' . $request->get('comments_cancel');
+            /** @var Office $office */
+            $office = Office::query()
+                ->lockForUpdate()
+                ->findOrFail($officeId);
 
-        $this->transactions->cancel($transaction, $comments);
+            if ($transaction->payment_type === 'cash') {
+                $office->forceFill([
+                    'cash' => round((float) $office->cash - (float) $transaction->amount, 2),
+                ])->save();
+            }
 
-        if ($transaction->type === 'expiration_date_change') {
-            $data = json_decode($transaction->data);
-            $new  = \Date::parse($data->old_date_expiration);
-            $this->pawnsRepo->updateDateExpiration($transaction->pawn, $new);
-        }
+            $data = is_array($transaction->data) ? $transaction->data : [];
 
-        return redirect()->route('pawns.show', $transaction->pawn->id);
+            $data['cancelled'] = [
+                'by_user_id' => $request->user()?->id,
+                'at' => now()->toDateTimeString(),
+                'cash_before' => (float) $office->getOriginal('cash'),
+                'cash_after' => (float) $office->cash,
+            ];
+
+            $transaction->forceFill([
+                'canceled_at' => now(),
+                'comments_cancel' => $request->validated('comments_cancel'),
+                'data' => $data,
+            ])->save();
+        });
+
+        return redirect()
+            ->route('transactions.show', $id)
+            ->with('success', 'Transacción cancelada correctamente.');
     }
 }

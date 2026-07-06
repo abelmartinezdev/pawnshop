@@ -2,7 +2,12 @@
 
 namespace App\Http\Requests\Auth;
 
+use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class LoginRequest extends FormRequest
 {
@@ -14,39 +19,64 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email'    => ['required', 'string', 'email', 'max:255'],
-            'password' => ['required', 'string', 'min:6', 'max:255'],
-            'remember' => ['sometimes', 'boolean'],
+            'email' => ['required', 'string', 'email'],
+            'password' => ['required', 'string'],
+            'remember' => ['nullable', 'boolean'],
         ];
     }
 
-    public function messages(): array
+    /**
+     * Attempt to authenticate the request's credentials.
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function authenticate(): void
     {
-        return [
-            'email.required' => 'El correo es obligatorio.',
-            'email.email'    => 'El correo no tiene un formato válido.',
-            'password.required' => 'La contraseña es obligatoria.',
-            'password.min'      => 'La contraseña debe tener al menos :min caracteres.',
+        $this->ensureIsNotRateLimited();
+
+        $credentials = [
+            'email' => $this->string('email')->lower()->toString(),
+            'password' => $this->string('password')->toString(),
         ];
+
+        if (! Auth::attempt($credentials, $this->boolean('remember'))) {
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'email' => 'Las credenciales no coinciden con nuestros registros.',
+            ]);
+        }
+
+        RateLimiter::clear($this->throttleKey());
     }
 
-    public function email(): string
+    /**
+     * Ensure the login request is not rate limited.
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function ensureIsNotRateLimited(): void
     {
-        return (string) $this->input('email');
+        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+            return;
+        }
+
+        event(new Lockout($this));
+
+        $seconds = RateLimiter::availableIn($this->throttleKey());
+
+        throw ValidationException::withMessages([
+            'email' => trans('auth.throttle', [
+                'seconds' => $seconds,
+                'minutes' => ceil($seconds / 60),
+            ]),
+        ]);
     }
 
-    public function password(): string
+    public function throttleKey(): string
     {
-        return (string) $this->input('password');
-    }
-
-    public function remember(): bool
-    {
-        return (bool) $this->boolean('remember');
-    }
-
-    public function ipAddress(): string
-    {
-        return (string) $this->ip();
+        return Str::transliterate(
+            Str::lower($this->string('email')->toString()) . '|' . $this->ip()
+        );
     }
 }

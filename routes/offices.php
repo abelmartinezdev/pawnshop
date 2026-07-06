@@ -8,12 +8,9 @@ Route::middleware(['auth', 'verified'])
     ->prefix('offices')
     ->name('offices.')
     ->group(function () {
-
-        // Selector de sucursal (por si el user no tiene office_id)
         Route::get('/select', [OfficeSelectController::class, 'show'])->name('select');
         Route::post('/select', [OfficeSelectController::class, 'store'])->name('select.store');
 
-        // CRUD (protegido)
         Route::middleware(['ensure_office', 'permission:offices.manage'])->group(function () {
             Route::get('/', [OfficeController::class, 'index'])->name('index');
             Route::get('/create', [OfficeController::class, 'create'])->name('create');
