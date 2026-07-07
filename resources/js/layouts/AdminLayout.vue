@@ -106,7 +106,7 @@ const navigationGroups = computed(() => [
             },
             {
                 name: 'Corte de caja',
-                route: 'closures.create',
+                route: 'closures.index',
                 active: isCurrent('closures.*'),
                 icon: 'cash',
             },

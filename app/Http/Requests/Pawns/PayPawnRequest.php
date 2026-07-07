@@ -15,19 +15,71 @@ class PayPawnRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'transaction' => ['required', Rule::in(['liquidate','countersign','interest_payment'])],
-            'amount_paid' => ['required','numeric','min:0.01'],
-            'payment' => ['nullable','numeric','min:0.01'],
-            'pay_extra' => ['nullable','numeric','min:0'],
-            'payment_type' => ['required', Rule::in(['cash','card','transfer'])], // ajusta
+            'transaction' => [
+                'required',
+                'string',
+                Rule::in([
+                    'liquidation',
+                    'liquidate',
+                    'countersign',
+                    'interest_payment',
+                ]),
+            ],
+            'discount' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'pay_extra' => ['nullable', 'numeric', 'min:0'],
+            'payment' => ['nullable', 'numeric', 'min:0'],
+            'amount_due' => ['required', 'numeric', 'min:0.01'],
+            'amount_paid' => ['required', 'numeric', 'min:0.01'],
+            'payment_type' => [
+                'required',
+                'string',
+                Rule::in(['cash', 'card', 'transfer']),
+            ],
+            'change' => ['nullable', 'numeric', 'min:0'],
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'transaction' => 'transacción',
+            'discount' => 'descuento',
+            'pay_extra' => 'abono a capital',
+            'payment' => 'abono a interés',
+            'amount_due' => 'total a pagar',
+            'amount_paid' => 'pago recibido',
+            'payment_type' => 'tipo de pago',
+            'change' => 'cambio',
         ];
     }
 
     protected function prepareForValidation(): void
     {
-        // tu viejo input era "pay-extra"
-        if ($this->has('pay-extra') && ! $this->has('pay_extra')) {
-            $this->merge(['pay_extra' => $this->input('pay-extra')]);
+        $transaction = (string) $this->input('transaction', '');
+
+        if ($transaction === 'liquidate') {
+            $transaction = 'liquidation';
         }
+
+        $this->merge([
+            'transaction' => $transaction,
+            'discount' => $this->moneyToFloat($this->input('discount', 0)),
+            'pay_extra' => $this->moneyToFloat($this->input('pay_extra', 0)),
+            'payment' => $this->moneyToFloat($this->input('payment', 0)),
+            'amount_due' => $this->moneyToFloat($this->input('amount_due', 0)),
+            'amount_paid' => $this->moneyToFloat($this->input('amount_paid', 0)),
+            'change' => $this->moneyToFloat($this->input('change', 0)),
+        ]);
+    }
+
+    private function moneyToFloat(mixed $value): float
+    {
+        if ($value === null || $value === '') {
+            return 0.0;
+        }
+
+        $value = str_replace(['$', ',', ' '], '', (string) $value);
+
+        return round((float) $value, 2);
     }
 }

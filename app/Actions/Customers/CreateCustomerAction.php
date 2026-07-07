@@ -3,18 +3,15 @@
 namespace App\Actions\Customers;
 
 use App\Models\Customer;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class CreateCustomerAction
 {
-    public function execute(array $data): Customer
+    public function __invoke(): Response
     {
-        $data['name'] = trim($data['name']);
-
-        // Normaliza RFC opcional
-        if (isset($data['rfc']) && $data['rfc'] !== null) {
-            $data['rfc'] = strtoupper(trim($data['rfc']));
-        }
-
-        return Customer::create($data);
+        return Inertia::render('Customers/Create', [
+            'identificationTypes' => Customer::identificationTypes(),
+        ]);
     }
 }

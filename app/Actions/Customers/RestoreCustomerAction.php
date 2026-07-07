@@ -3,15 +3,20 @@
 namespace App\Actions\Customers;
 
 use App\Models\Customer;
+use Illuminate\Http\RedirectResponse;
 
 class RestoreCustomerAction
 {
-    public function execute(int $id): void
+    public function __invoke(int $id): RedirectResponse
     {
-        $customer = Customer::withTrashed()->findOrFail($id);
+        $customer = Customer::query()
+            ->onlyTrashed()
+            ->findOrFail($id);
 
-        if ($customer->trashed()) {
-            $customer->restore();
-        }
+        $customer->restore();
+
+        return redirect()
+            ->route('customers.show', $customer->id)
+            ->with('success', 'Cliente restaurado correctamente.');
     }
 }

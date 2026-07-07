@@ -2,51 +2,62 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Concerns\RendersComingSoon;
+use App\Actions\Products\CreateProductAction;
+use App\Actions\Products\DestroyProductAction;
+use App\Actions\Products\EditProductAction;
+use App\Actions\Products\IndexProductAction;
+use App\Actions\Products\RestoreProductAction;
+use App\Actions\Products\ShowProductAction;
+use App\Actions\Products\StoreProductAction;
+use App\Actions\Products\UpdateProductAction;
+use App\Http\Requests\Products\StoreProductRequest;
+use App\Http\Requests\Products\UpdateProductRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Response;
 
 class ProductsController extends Controller
 {
-    use RendersComingSoon;
-
-    public function index(): Response
+    public function index(Request $request, IndexProductAction $action): Response
     {
-        return $this->comingSoon('Productos');
+        return $action($request);
     }
 
-    public function create(): Response
+    public function create(CreateProductAction $action): Response
     {
-        return $this->comingSoon('Nuevo producto');
+        return $action();
     }
 
-    public function store(): RedirectResponse
+    public function store(StoreProductRequest $request, StoreProductAction $action): RedirectResponse
     {
-        return $this->pendingAction('La creación de productos está pendiente de implementar.');
+        return $action($request);
     }
 
-    public function show($product): Response
+    public function show(int $product, ShowProductAction $action): Response
     {
-        return $this->comingSoon('Detalle de producto');
+        return $action($product);
     }
 
-    public function edit($product): Response
+    public function edit(int $product, EditProductAction $action): Response
     {
-        return $this->comingSoon('Editar producto');
+        return $action($product);
     }
 
-    public function update($product): RedirectResponse
-    {
-        return $this->pendingAction('La actualización de productos está pendiente de implementar.');
+    public function update(
+        int $product,
+        UpdateProductRequest $request,
+        UpdateProductAction $action
+    ): RedirectResponse {
+        return $action($product, $request);
     }
 
-    public function destroy($product): RedirectResponse
+    public function destroy(int $product, DestroyProductAction $action): RedirectResponse
     {
-        return $this->pendingAction('La eliminación de productos está pendiente de implementar.');
+        return $action($product);
     }
 
-    public function restore($id): RedirectResponse
+    public function restore(int $id, RestoreProductAction $action): RedirectResponse
     {
-        return $this->pendingAction('La restauración de productos está pendiente de implementar.');
+        return $action($id);
     }
 }

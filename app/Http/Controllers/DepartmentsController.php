@@ -2,51 +2,62 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Concerns\RendersComingSoon;
+use App\Actions\Departments\CreateDepartmentAction;
+use App\Actions\Departments\DestroyDepartmentAction;
+use App\Actions\Departments\EditDepartmentAction;
+use App\Actions\Departments\IndexDepartmentAction;
+use App\Actions\Departments\RestoreDepartmentAction;
+use App\Actions\Departments\ShowDepartmentAction;
+use App\Actions\Departments\StoreDepartmentAction;
+use App\Actions\Departments\UpdateDepartmentAction;
+use App\Http\Requests\Departments\StoreDepartmentRequest;
+use App\Http\Requests\Departments\UpdateDepartmentRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Response;
 
 class DepartmentsController extends Controller
 {
-    use RendersComingSoon;
-
-    public function index(): Response
+    public function index(Request $request, IndexDepartmentAction $action): Response
     {
-        return $this->comingSoon('Departamentos');
+        return $action($request);
     }
 
-    public function create(): Response
+    public function create(CreateDepartmentAction $action): Response
     {
-        return $this->comingSoon('Nuevo departamento');
+        return $action();
     }
 
-    public function store(): RedirectResponse
+    public function store(StoreDepartmentRequest $request, StoreDepartmentAction $action): RedirectResponse
     {
-        return $this->pendingAction('La creación de departamentos está pendiente de implementar.');
+        return $action($request);
     }
 
-    public function show($department): Response
+    public function show(int $department, ShowDepartmentAction $action): Response
     {
-        return $this->comingSoon('Detalle de departamento');
+        return $action($department);
     }
 
-    public function edit($department): Response
+    public function edit(int $department, EditDepartmentAction $action): Response
     {
-        return $this->comingSoon('Editar departamento');
+        return $action($department);
     }
 
-    public function update($department): RedirectResponse
-    {
-        return $this->pendingAction('La actualización de departamentos está pendiente de implementar.');
+    public function update(
+        int $department,
+        UpdateDepartmentRequest $request,
+        UpdateDepartmentAction $action
+    ): RedirectResponse {
+        return $action($department, $request);
     }
 
-    public function destroy($department): RedirectResponse
+    public function destroy(int $department, DestroyDepartmentAction $action): RedirectResponse
     {
-        return $this->pendingAction('La eliminación de departamentos está pendiente de implementar.');
+        return $action($department);
     }
 
-    public function restore($id): RedirectResponse
+    public function restore(int $id, RestoreDepartmentAction $action): RedirectResponse
     {
-        return $this->pendingAction('La restauración de departamentos está pendiente de implementar.');
+        return $action($id);
     }
 }

@@ -3,11 +3,22 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Customer extends Model
 {
     use SoftDeletes;
+
+    public const IDENTIFICATION_TYPES = [
+        1 => 'INE',
+        2 => 'Pasaporte',
+        3 => 'Licencia de conducir',
+        4 => 'Cartilla militar',
+        5 => 'Cédula profesional',
+        6 => 'INAPAM',
+        7 => 'Otro',
+    ];
 
     protected $fillable = [
         'name',
@@ -23,33 +34,48 @@ class Customer extends Model
         'inapam_code',
     ];
 
-    public function hasInapam(): bool
+    protected $casts = [
+        'type_id' => 'integer',
+    ];
+
+    public static function identificationTypes(): array
     {
-        return (string) ($this->inapam_code ?? '') !== '';
+        return collect(self::IDENTIFICATION_TYPES)
+            ->map(fn (string $label, int $id) => [
+                'id' => $id,
+                'name' => $label,
+            ])
+            ->values()
+            ->all();
     }
 
-    public function pawns()
+    public function pawns(): HasMany
     {
         return $this->hasMany(Pawn::class);
     }
 
-    public function transactions()
+    public function getDisplayPhoneAttribute(): ?string
     {
-        // Pawn tiene customer_id, Transaction tiene pawn_id
-        return $this->hasManyThrough(Transaction::class, Pawn::class, 'customer_id', 'pawn_id');
+        return $this->mobile ?: $this->phone;
     }
 
-    protected ?int $pending = null;
-
-    public function havePending(): int
+    public function getFullAddressAttribute(): string
     {
-        if ($this->pending === null) {
-            $this->pending = $this->pawns()
-                ->whereNull('paid_at')
-                ->whereNull('canceled_at')
-                ->count();
+        return collect([
+            $this->address,
+            $this->city,
+            $this->state,
+        ])
+            ->filter()
+            ->join(', ');
+    }
+
+    public function getIdentificationTypeLabelAttribute(): ?string
+    {
+        if (! $this->type_id) {
+            return null;
         }
 
-        return $this->pending;
+        return self::IDENTIFICATION_TYPES[(int) $this->type_id] ?? 'No especificado';
     }
 }

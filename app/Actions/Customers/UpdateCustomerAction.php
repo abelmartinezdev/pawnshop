@@ -2,20 +2,20 @@
 
 namespace App\Actions\Customers;
 
+use App\Http\Requests\Customers\UpdateCustomerRequest;
 use App\Models\Customer;
+use Illuminate\Http\RedirectResponse;
 
 class UpdateCustomerAction
 {
-    public function execute(Customer $customer, array $data): Customer
+    public function __invoke(int $id, UpdateCustomerRequest $request): RedirectResponse
     {
-        $data['name'] = trim($data['name']);
+        $customer = Customer::query()->findOrFail($id);
 
-        if (isset($data['rfc']) && $data['rfc'] !== null) {
-            $data['rfc'] = strtoupper(trim($data['rfc']));
-        }
+        $customer->update($request->validated());
 
-        $customer->update($data);
-
-        return $customer;
+        return redirect()
+            ->route('customers.show', $customer->id)
+            ->with('success', 'Cliente actualizado correctamente.');
     }
 }
