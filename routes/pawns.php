@@ -18,6 +18,9 @@ Route::middleware(['auth', 'verified', 'ensure_office', 'permission:pawn.manage'
         Route::put('/date-expiration/{pawn}', [PawnsController::class, 'updateDateExpiration'])
             ->name('date-expiration.update');
 
+        Route::get('/print/big-ticket/{pawn}', [PawnsController::class, 'printBigTicket'])
+            ->name('print.big-ticket');
+
         Route::get('/{pawn}/print/countersign', [PawnsController::class, 'printCountersign'])
             ->name('print.countersign');
 

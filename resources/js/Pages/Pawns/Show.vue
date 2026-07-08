@@ -570,7 +570,24 @@ const iconPath = (icon) => {
                                 Fecha de espera
                             </button>
 
-                            <button type="button" class="sicem-action-button" @click="window.print()">
+                            <a
+                                v-if="urls.print_big_ticket"
+                                :href="urls.print_big_ticket"
+                                target="_blank"
+                                class="sicem-action-button"
+                            >
+                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none">
+                                    <path :d="iconPath('print')" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                Boleta
+                            </a>
+
+                            <button
+                                v-else
+                                type="button"
+                                class="sicem-action-button sicem-action-disabled"
+                                disabled
+                            >
                                 <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none">
                                     <path :d="iconPath('print')" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
                                 </svg>

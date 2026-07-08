@@ -2,17 +2,24 @@
 
 namespace App\Actions\Companies;
 
+use App\Http\Requests\Companies\UpdateCompanyRequest;
 use App\Models\Company;
+use Illuminate\Http\RedirectResponse;
 
 class UpdateCompanyAction
 {
-    public function execute(Company $company, array $data): Company
+    public function __invoke(UpdateCompanyRequest $request, Company $company): RedirectResponse
     {
-        if (isset($data['code'])) {
-            $data['code'] = strtoupper(trim((string) $data['code']));
-        }
+        $company->update($request->validated());
 
-        $company->update($data);
+        return redirect()
+            ->route('companies.show', $company->id)
+            ->with('success', 'Empresa actualizada correctamente.');
+    }
+
+    public function execute(Company $company, array $validated): Company
+    {
+        $company->update($validated);
 
         return $company;
     }

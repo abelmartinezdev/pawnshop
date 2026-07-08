@@ -176,6 +176,9 @@ class ShowPawnAction
                 'date_expiration' => Route::has('pawns.date-expiration.edit')
                     ? route('pawns.date-expiration.edit', $pawn->id)
                     : null,
+                'print_big_ticket' => Route::has('pawns.print.big-ticket')
+                    ? route('pawns.print.big-ticket', $pawn->id)
+                    : null,
             ],
         ]);
     }

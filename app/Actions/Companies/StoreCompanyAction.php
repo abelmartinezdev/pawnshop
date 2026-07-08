@@ -2,17 +2,23 @@
 
 namespace App\Actions\Companies;
 
+use App\Http\Requests\Companies\StoreCompanyRequest;
 use App\Models\Company;
+use Illuminate\Http\RedirectResponse;
 
 class StoreCompanyAction
 {
-    public function execute(array $data): Company
+    public function __invoke(StoreCompanyRequest $request): RedirectResponse
     {
-        // Si mantienes "code" como antes:
-        if (isset($data['code'])) {
-            $data['code'] = strtoupper(trim((string) $data['code']));
-        }
+        $company = Company::query()->create($request->validated());
 
-        return Company::create($data);
+        return redirect()
+            ->route('companies.show', $company->id)
+            ->with('success', 'Empresa creada correctamente.');
+    }
+
+    public function execute(array $validated): Company
+    {
+        return Company::query()->create($validated);
     }
 }

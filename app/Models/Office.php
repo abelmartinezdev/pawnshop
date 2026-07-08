@@ -3,9 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Office extends Model
 {
@@ -39,5 +39,25 @@ class Office extends Model
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    public function pawns(): HasMany
+    {
+        return $this->hasMany(Pawn::class);
+    }
+
+    public function scopeForCompany($query, int $companyId)
+    {
+        return $query->where('company_id', $companyId);
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        return $this->trashed() ? 'Archivada' : 'Activa';
+    }
+
+    public function getDisplayNameAttribute(): string
+    {
+        return trim(($this->serie ? "{$this->serie} · " : '') . $this->name);
     }
 }

@@ -3,8 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Company extends Model
 {
@@ -19,8 +19,6 @@ class Company extends Model
         'address',
         'website',
         'is_active',
-
-        // si luego los necesitas:
         'storage_commission',
         'marketing_commission',
         'delayed_payment_commission',
@@ -40,9 +38,17 @@ class Company extends Model
         return $this->hasMany(Office::class);
     }
 
-    // scope útil
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        if ($this->trashed()) {
+            return 'Archivada';
+        }
+
+        return $this->is_active ? 'Activa' : 'Inactiva';
     }
 }

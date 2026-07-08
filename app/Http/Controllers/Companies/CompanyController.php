@@ -2,89 +2,64 @@
 
 namespace App\Http\Controllers\Companies;
 
+use App\Actions\Companies\CreateCompanyAction;
+use App\Actions\Companies\DeleteCompanyAction;
+use App\Actions\Companies\EditCompanyAction;
+use App\Actions\Companies\IndexCompanyAction;
+use App\Actions\Companies\RestoreCompanyAction;
+use App\Actions\Companies\ShowCompanyAction;
 use App\Actions\Companies\StoreCompanyAction;
 use App\Actions\Companies\UpdateCompanyAction;
-use App\Actions\Companies\DeleteCompanyAction;
-use App\Actions\Companies\RestoreCompanyAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Companies\StoreCompanyRequest;
 use App\Http\Requests\Companies\UpdateCompanyRequest;
 use App\Models\Company;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
+use Inertia\Response;
 
 class CompanyController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, IndexCompanyAction $action): Response
     {
-        $q = trim((string) $request->get('q', ''));
-        $status = (string) $request->get('status', 'active'); // active|all|trashed
-        $perPage = (int) ($request->get('perPage', 10));
-
-        $query = Company::query()
-            ->when($status === 'trashed', fn ($x) => $x->onlyTrashed())
-            ->when($status === 'all', fn ($x) => $x->withTrashed())
-            ->when($q !== '', function ($x) use ($q) {
-                $x->where(function ($w) use ($q) {
-                    $w->where('name', 'like', "%{$q}%")
-                      ->orWhere('code', 'like', "%{$q}%");
-                });
-            })
-            ->orderBy('name');
-
-        $companies = $query->paginate($perPage)->withQueryString();
-
-        return Inertia::render('Companies/Index', [
-            'companies' => $companies,
-            'filters' => [
-                'q' => $q,
-                'status' => $status,
-                'perPage' => $perPage,
-            ],
-        ]);
+        return $action($request);
     }
 
-    public function create()
+    public function create(CreateCompanyAction $action): Response
     {
-        return Inertia::render('Companies/Create');
+        return $action();
     }
 
-    public function store(StoreCompanyRequest $request, StoreCompanyAction $action)
+    public function store(StoreCompanyRequest $request, StoreCompanyAction $action): RedirectResponse
     {
-        $action->execute($request->validated());
-
-        return redirect()->route('companies.index')
-            ->with('flash', ['type' => 'success', 'message' => 'Empresa creada.']);
+        return $action($request);
     }
 
-    public function edit(Company $company)
+    public function show(Company $company, ShowCompanyAction $action): Response
     {
-        return Inertia::render('Companies/Edit', [
-            'company' => $company,
-        ]);
+        return $action($company);
     }
 
-    public function update(UpdateCompanyRequest $request, Company $company, UpdateCompanyAction $action)
+    public function edit(Company $company, EditCompanyAction $action): Response
     {
-        $action->execute($company, $request->validated());
-
-        return redirect()->route('companies.index')
-            ->with('flash', ['type' => 'success', 'message' => 'Empresa actualizada.']);
+        return $action($company);
     }
 
-    public function destroy(Company $company, DeleteCompanyAction $action)
-    {
-        $action->execute($company);
-
-        return redirect()->route('companies.index')
-            ->with('flash', ['type' => 'success', 'message' => 'Empresa archivada.']);
+    public function update(
+        UpdateCompanyRequest $request,
+        Company $company,
+        UpdateCompanyAction $action
+    ): RedirectResponse {
+        return $action($request, $company);
     }
 
-    public function restore(int $id, RestoreCompanyAction $action)
+    public function destroy(Company $company, DeleteCompanyAction $action): RedirectResponse
     {
-        $action->execute($id);
+        return $action($company);
+    }
 
-        return redirect()->route('companies.index')
-            ->with('flash', ['type' => 'success', 'message' => 'Empresa restaurada.']);
+    public function restore(int $id, RestoreCompanyAction $action): RedirectResponse
+    {
+        return $action($id);
     }
 }

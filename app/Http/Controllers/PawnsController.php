@@ -18,6 +18,7 @@ use App\Models\Pawn;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Response;
+use App\Actions\Pawns\PrintBigPawnTicketAction;
 
 class PawnsController extends Controller
 {
@@ -65,6 +66,11 @@ class PawnsController extends Controller
     }
 
     public function printCountersign(Pawn $pawn, PrintCountersignTicketAction $action)
+    {
+        return $action($pawn);
+    }
+
+    public function printBigTicket(Pawn $pawn, PrintBigPawnTicketAction $action)
     {
         return $action($pawn);
     }

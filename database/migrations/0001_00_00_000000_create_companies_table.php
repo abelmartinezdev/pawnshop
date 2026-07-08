@@ -5,33 +5,44 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
-  public function up(): void
-  {
-    Schema::create('companies', function (Blueprint $table) {
-      $table->id();
+    public function up(): void
+    {
+        Schema::create('companies', function (Blueprint $table) {
+            $table->id();
 
-      $table->string('name');
-      $table->string('rfc')->nullable();
-      $table->string('phone')->nullable();
-      $table->string('email')->nullable();
-      $table->string('website')->nullable();
-      $table->string('address')->nullable();
+            $table->string('name');
+            $table->string('code', 50)->nullable();
 
-      // comisiones (por si las usarás)
-      $table->decimal('storage_commission', 8, 2)->default(0);
-      $table->decimal('marketing_commission', 8, 2)->default(0);
-      $table->decimal('delayed_payment_commission', 8, 2)->default(0);
-      $table->decimal('replacement_contract_commission', 8, 2)->default(0);
+            $table->string('rfc', 20)->nullable();
+            $table->string('phone', 50)->nullable();
+            $table->string('email')->nullable();
+            $table->string('website')->nullable();
+            $table->text('address')->nullable();
 
-      $table->timestamps();
-      $table->softDeletes();
+            // Comisiones
+            $table->decimal('storage_commission', 8, 2)->default(0);
+            $table->decimal('marketing_commission', 8, 2)->default(0);
+            $table->decimal('delayed_payment_commission', 8, 2)->default(0);
+            $table->decimal('replacement_contract_commission', 8, 2)->default(0);
 
-      $table->unique(['name', 'deleted_at']);
-    });
-  }
+            $table->boolean('is_active')->default(true);
 
-  public function down(): void
-  {
-    Schema::dropIfExists('companies');
-  }
+            $table->timestamps();
+            $table->softDeletes();
+
+            $table->index('name');
+            $table->index('code');
+            $table->index('rfc');
+            $table->index('is_active');
+            $table->index('deleted_at');
+
+            // Permite varios NULL, pero evita códigos repetidos cuando sí se capturen.
+            $table->unique('code');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('companies');
+    }
 };
