@@ -132,10 +132,6 @@ const hasCalculatedPriceRange = computed(() => {
 const itemPriceOutsideRange = computed(() => {
     const value = Number(itemForm.value || 0)
 
-    if (!hasCalculatedPriceRange.value || value <= 0) {
-        return false
-    }
-
     if (calculatedMinPrice.value > 0 && value < calculatedMinPrice.value) {
         return true
     }
@@ -302,13 +298,6 @@ const addItem = () => {
 
     if (!Number(itemForm.value || 0)) {
         openError('Captura el valor del artículo.')
-        return
-    }
-
-    if (itemPriceOutsideRange.value) {
-        openError(
-            `El valor debe estar entre ${money(calculatedMinPrice.value)} y ${money(calculatedMaxPrice.value)} según la cantidad capturada.`
-        )
         return
     }
 
@@ -531,7 +520,7 @@ const iconPath = (icon) => {
 
                     <Link
                         :href="route('customers.create', { where: 'box' })"
-                        class="inline-flex items-center justify-center gap-2 rounded-2xl !bg-[#5b55a4] px-5 py-3 text-sm font-black !text-white shadow-lg shadow-violet-200 transition hover:!bg-[#4f4896]"
+                        class="sicem-btn-primary inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-black shadow-lg shadow-violet-200 transition"
                     >
                         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none">
                             <path :d="iconPath('plus')" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
@@ -602,7 +591,7 @@ const iconPath = (icon) => {
                                     <td class="px-5 py-4 text-right">
                                         <button
                                             type="button"
-                                            class="rounded-2xl !bg-blue-600 px-4 py-2 text-xs font-black !text-white shadow-sm transition hover:!bg-blue-700"
+                                            class="sicem-btn-blue rounded-2xl px-4 py-2 text-xs font-black shadow-sm transition"
                                             @click="selectCustomer(customer)"
                                         >
                                             Seleccionar
@@ -1050,7 +1039,7 @@ const iconPath = (icon) => {
 
                             <button
                                 type="button"
-                                class="rounded-xl !bg-[#5b55a4] px-3 py-1.5 text-xs font-black !text-white transition hover:!bg-[#4f4896]"
+                                class="sicem-btn-primary rounded-xl px-3 py-1.5 text-xs font-black transition"
                                 @click="itemForm.value = calculatedMaxPrice"
                             >
                                 Usar máximo
@@ -1185,7 +1174,7 @@ const iconPath = (icon) => {
 
                 <button
                     type="button"
-                    class="mt-6 rounded-2xl !bg-blue-600 px-6 py-3 text-sm font-black !text-white shadow-lg shadow-blue-100 transition hover:!bg-blue-700"
+                    class="sicem-btn-blue mt-6 rounded-2xl px-6 py-3 text-sm font-black shadow-lg shadow-blue-100 transition"
                     @click="showErrorModal = false"
                 >
                     OK
@@ -1194,18 +1183,39 @@ const iconPath = (icon) => {
         </div>
     </AdminLayout>
 </template>
+
 <style scoped>
-.sicem-total-box {
-    background-color: #202020 !important;
+.sicem-btn-primary {
+    background-color: #5b55a4 !important;
+    color: #ffffff !important;
+    border-color: #5b55a4 !important;
+}
+
+.sicem-btn-primary:hover {
+    background-color: #4f4896 !important;
     color: #ffffff !important;
 }
 
-.sicem-total-label {
-    color: #34d399 !important;
+.sicem-btn-rose {
+    background-color: #e11d48 !important;
+    color: #ffffff !important;
+    border-color: #e11d48 !important;
 }
 
-.sicem-total-amount {
-    color: #34d399 !important;
+.sicem-btn-rose:hover {
+    background-color: #be123c !important;
+    color: #ffffff !important;
+}
+
+.sicem-btn-blue {
+    background-color: #2563eb !important;
+    color: #ffffff !important;
+    border-color: #2563eb !important;
+}
+
+.sicem-btn-blue:hover {
+    background-color: #1d4ed8 !important;
+    color: #ffffff !important;
 }
 
 .sicem-btn-orange {
@@ -1222,5 +1232,18 @@ const iconPath = (icon) => {
 .sicem-btn-disabled:disabled {
     opacity: 0.55 !important;
     cursor: not-allowed !important;
+}
+
+.sicem-total-box {
+    background-color: #202020 !important;
+    color: #ffffff !important;
+}
+
+.sicem-total-label {
+    color: #34d399 !important;
+}
+
+.sicem-total-amount {
+    color: #34d399 !important;
 }
 </style>
