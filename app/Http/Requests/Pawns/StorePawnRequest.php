@@ -26,6 +26,12 @@ class StorePawnRequest extends FormRequest
             'items.*.quantity' => ['required', 'numeric', 'min:0.001'],
             'items.*.description' => ['required', 'string'],
             'items.*.value' => ['required', 'numeric', 'min:0.01'],
+
+            'photos' => ['nullable', 'array', 'max:10'],
+            'photos.*.uid' => ['nullable', 'string', 'max:100'],
+            'photos.*.source' => ['nullable', 'string', 'max:50'],
+            'photos.*.captured_at' => ['nullable', 'string', 'max:100'],
+            'photos.*.data_url' => ['required_with:photos', 'string'],
         ];
     }
 

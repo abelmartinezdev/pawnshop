@@ -2,6 +2,7 @@
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Head, Link, router, useForm } from '@inertiajs/vue3'
 import { computed, reactive, ref, watch } from 'vue'
+import PawnPhotoCapture from '@/components/Pawns/PawnPhotoCapture.vue'
 
 const props = defineProps({
     customers: {
@@ -59,6 +60,7 @@ const form = useForm({
     bag: '',
     comments: '',
     items: [],
+    photos: [],
 })
 
 const inputClass = 'h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#5b55a4] focus:ring-4 focus:ring-violet-100'
@@ -806,6 +808,8 @@ const iconPath = (icon) => {
                         </div>
                     </div>
 
+                    <PawnPhotoCapture v-model="form.photos" />
+
                     <div class="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm">
                         <div class="border-b border-slate-100 px-6 py-5">
                             <h2 class="text-lg font-black text-slate-950">
@@ -1111,6 +1115,16 @@ const iconPath = (icon) => {
                         </p>
                         <p class="sicem-total-amount mt-2 text-4xl font-black">
                             {{ money(total) }}
+                        </p>
+                    </div>
+
+                    <div class="rounded-2xl bg-slate-50 p-4">
+                        <p class="text-xs font-black uppercase tracking-[0.18em] text-slate-400">
+                            Fotografías
+                        </p>
+
+                        <p class="mt-1 text-sm font-black text-slate-800">
+                            {{ form.photos.length }} foto(s) capturada(s)
                         </p>
                     </div>
 

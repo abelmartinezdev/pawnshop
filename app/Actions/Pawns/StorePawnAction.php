@@ -12,7 +12,8 @@ use App\Models\Transaction;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 class StorePawnAction
 {
     public function __invoke(StorePawnRequest $request): RedirectResponse
@@ -84,6 +85,14 @@ class StorePawnAction
                     : null,
             ]);
 
+            $storedPhotos = $this->storePhotos($pawn, $validated['photos'] ?? []);
+
+            if (count($storedPhotos) > 0) {
+                $pawn->forceFill([
+                    'photos' => json_encode($storedPhotos),
+                ])->save();
+            }
+
             foreach ($items as $item) {
                 $product = Product::query()->findOrFail((int) $item['product_id']);
 
@@ -127,5 +136,35 @@ class StorePawnAction
         return redirect()
             ->route('pawns.show', $pawn->id)
             ->with('success', 'Empeño registrado correctamente.');
+    }
+
+    private function storePhotos(Pawn $pawn, array $photos): array
+    {
+        $stored = [];
+
+        foreach ($photos as $index => $photo) {
+            $dataUrl = (string) ($photo['data_url'] ?? '');
+
+            if (! preg_match('/^data:image\/(jpeg|jpg|png|webp);base64,/', $dataUrl, $matches)) {
+                continue;
+            }
+
+            $extension = strtolower($matches[1]) === 'jpeg' ? 'jpg' : strtolower($matches[1]);
+            $base64 = preg_replace('/^data:image\/(jpeg|jpg|png|webp);base64,/', '', $dataUrl);
+            $binary = base64_decode($base64, true);
+
+            if ($binary === false) {
+                continue;
+            }
+
+            $filename = 'pawn-' . $pawn->id . '-' . ($index + 1) . '-' . Str::random(10) . '.' . $extension;
+            $path = 'pawns/' . $pawn->id . '/photos/' . $filename;
+
+            Storage::disk('public')->put($path, $binary);
+
+            $stored[] = '/storage/' . $path;
+        }
+
+        return $stored;
     }
 }
