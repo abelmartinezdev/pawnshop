@@ -616,7 +616,23 @@ const iconPath = (icon) => {
                                 Ver anterior
                             </button>
 
-                            <button type="button" class="sicem-action-button">
+                            <Link
+                                v-if="urls.anticipated_date"
+                                :href="urls.anticipated_date"
+                                class="sicem-action-button"
+                            >
+                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none">
+                                    <path :d="iconPath('calendar')" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                Fecha anticipada
+                            </Link>
+
+                            <button
+                                v-else
+                                type="button"
+                                class="sicem-action-button sicem-action-disabled"
+                                disabled
+                            >
                                 <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none">
                                     <path :d="iconPath('calendar')" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
                                 </svg>

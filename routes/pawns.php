@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\PawnsController;
 use Illuminate\Support\Facades\Route;
+use App\Actions\Pawns\ShowPawnAnticipatedDateAction;
 
 Route::middleware(['auth', 'verified', 'ensure_office', 'permission:pawn.manage'])
     ->prefix('pawns')
@@ -28,4 +29,7 @@ Route::middleware(['auth', 'verified', 'ensure_office', 'permission:pawn.manage'
 
         Route::get('/{pawn}/pay', [PawnsController::class, 'payForm'])->name('payForm');
         Route::post('/{pawn}/pay', [PawnsController::class, 'pay'])->name('pay');
+
+        Route::get('/pawns/{pawn}/anticipated-date', ShowPawnAnticipatedDateAction::class)
+            ->name('pawns.anticipated-date');
     });

@@ -179,6 +179,9 @@ class ShowPawnAction
                 'print_big_ticket' => Route::has('pawns.print.big-ticket')
                     ? route('pawns.print.big-ticket', $pawn->id)
                     : null,
+                'anticipated_date' => $this->canUseAnticipatedDate($pawn) && Route::has('pawns.anticipated-date')
+                    ? route('pawns.anticipated-date', $pawn->id)
+                    : null,
             ],
         ]);
     }
@@ -342,5 +345,13 @@ class ShowPawnAction
         } catch (Throwable) {
             return (string) $value;
         }
+    }
+
+    private function canUseAnticipatedDate(Pawn $pawn): bool
+    {
+        return $pawn->auction_at === null
+            && $pawn->paid_at === null
+            && $pawn->canceled_at === null
+            && ! $pawn->hasCountersign();
     }
 }
