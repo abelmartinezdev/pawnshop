@@ -153,6 +153,13 @@ class Pawn extends Model
         return $this->countersigns()->whereNull('canceled_at');
     }
 
+    public function interestDaysDiscounts(): HasMany
+    {
+        return $this->transactions()
+            ->where('type', 'interest_days_discount')
+            ->whereNull('canceled_at');
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Accessors
@@ -303,6 +310,16 @@ class Pawn extends Model
         return number_format(((float) $this->daily_interest_rate / $ivaFactor), 1);
     }
 
+    public function getInterestDiscountDaysAttribute(): int
+    {
+        return $this->interestDiscountDays();
+    }
+
+    public function getInterestDiscountAmountAttribute(): float
+    {
+        return $this->interestDiscountAmount(true);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Business helpers
@@ -450,6 +467,32 @@ class Pawn extends Model
             ->exists();
     }
 
+    public function interestDiscountDays(): int
+    {
+        return (int) $this->interestDaysDiscounts()
+            ->get()
+            ->sum(function (Transaction $transaction) {
+                $data = $this->transactionData($transaction);
+
+                return (int) ($data['discount_days'] ?? 0);
+            });
+    }
+
+    public function interestDiscountAmount(bool $withIva = true): float
+    {
+        return round((float) $this->interestDaysDiscounts()
+            ->get()
+            ->sum(function (Transaction $transaction) use ($withIva) {
+                $data = $this->transactionData($transaction);
+
+                if ($withIva) {
+                    return (float) ($data['discount_amount'] ?? 0);
+                }
+
+                return (float) ($data['discount_amount_without_iva'] ?? 0);
+            }), 2);
+    }
+
     public function getInterest2pay(bool $withIva = true): float
     {
         $interest = $this->getDailyInterest(false) * $this->days2pay;
@@ -461,8 +504,10 @@ class Pawn extends Model
                 $interest -= $interest * (float) $this->inapam_rate;
             }
 
+            $interest -= $this->interestDiscountAmount(true);
             $interest -= $this->paidAmount();
         } else {
+            $interest -= $this->interestDiscountAmount(false);
             $interest -= ($this->paidAmount() / (1 + $this->ivaRate()));
         }
 
@@ -480,8 +525,10 @@ class Pawn extends Model
                 $interest -= $interest * (float) $this->inapam_rate;
             }
 
+            $interest -= $this->interestDiscountAmount(true);
             $interest -= $this->paidAmount();
         } else {
+            $interest -= $this->interestDiscountAmount(false);
             $interest -= ($this->paidAmount() / (1 + $this->ivaRate()));
         }
 
@@ -584,5 +631,22 @@ class Pawn extends Model
         } catch (Throwable) {
             return null;
         }
+    }
+
+    private function transactionData(Transaction $transaction): array
+    {
+        $data = $transaction->data ?? null;
+
+        if (is_array($data)) {
+            return $data;
+        }
+
+        if (! $data) {
+            return [];
+        }
+
+        $decoded = json_decode((string) $data, true);
+
+        return is_array($decoded) ? $decoded : [];
     }
 }

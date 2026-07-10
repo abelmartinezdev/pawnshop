@@ -24,6 +24,23 @@ const props = defineProps({
 
 const selectedDate = ref(props.date)
 
+const printPage = () => {
+    if (typeof window === 'undefined') {
+        return
+    }
+
+    if (!props.urls.print_ticket) {
+        window.print()
+        return
+    }
+
+    const url = new URL(props.urls.print_ticket, window.location.origin)
+
+    url.searchParams.set('date', selectedDate.value)
+
+    window.open(url.toString(), '_blank')
+}
+
 const money = (value) => {
     return Number(value || 0).toLocaleString('es-MX', {
         style: 'currency',
@@ -128,7 +145,13 @@ const iconPath = (icon) => {
                         class="mb-4 inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-50"
                     >
                         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none">
-                            <path :d="iconPath('arrowLeft')" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                            <path
+                                :d="iconPath('arrowLeft')"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            />
                         </svg>
                         Regresar al empeño
                     </Link>
@@ -149,10 +172,16 @@ const iconPath = (icon) => {
                 <button
                     type="button"
                     class="sicem-btn-primary inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-black shadow-lg shadow-violet-100 transition"
-                    @click="window.print()"
+                    @click="printPage"
                 >
                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none">
-                        <path :d="iconPath('print')" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                        <path
+                            :d="iconPath('print')"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
                     </svg>
                     Imprimir cálculo
                 </button>
@@ -203,10 +232,20 @@ const iconPath = (icon) => {
                                         v-model="selectedDate"
                                         type="date"
                                         class="sicem-input w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 shadow-sm focus:border-[#5b55a4] focus:outline-none focus:ring-4 focus:ring-violet-100"
-                                    />
+                                    >
 
-                                    <svg class="pointer-events-none absolute right-4 top-3.5 h-5 w-5 text-slate-400" viewBox="0 0 24 24" fill="none">
-                                        <path :d="iconPath('calendar')" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                                    <svg
+                                        class="pointer-events-none absolute right-4 top-3.5 h-5 w-5 text-slate-400"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                    >
+                                        <path
+                                            :d="iconPath('calendar')"
+                                            stroke="currentColor"
+                                            stroke-width="1.8"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                        />
                                     </svg>
                                 </div>
 
@@ -223,7 +262,13 @@ const iconPath = (icon) => {
                                 <div class="mt-3 flex items-center gap-3">
                                     <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-[#5b55a4]">
                                         <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none">
-                                            <path :d="iconPath('user')" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                                            <path
+                                                :d="iconPath('user')"
+                                                stroke="currentColor"
+                                                stroke-width="1.8"
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                            />
                                         </svg>
                                     </div>
 

@@ -71,6 +71,9 @@ class ShowPawnAction
 
                 'is_paid' => $pawn->paid_at !== null,
                 'is_cancelled' => $pawn->canceled_at !== null,
+                'can_cancel' => $pawn->mayBeCanceled(),
+                'can_apply_discount' => auth()->user()?->can('apply-discount') && $this->canApplyDiscount($pawn),
+                'discount_preview' => $this->discountPreview($pawn),
                 'has_photos' => count($this->photos($pawn)) > 0,
 
                 'beneficiary' => $pawn->beneficiary,
@@ -182,8 +185,79 @@ class ShowPawnAction
                 'anticipated_date' => $this->canUseAnticipatedDate($pawn) && Route::has('pawns.anticipated-date')
                     ? route('pawns.anticipated-date', $pawn->id)
                     : null,
+                'cancel' => Route::has('pawns.cancel')
+                    ? route('pawns.cancel', $pawn->id)
+                    : null,
+                // 'apply_discount' => auth()->user()?->can('apply-discount') && $this->canApplyDiscount($pawn) && Route::has('pawns.apply-discount')
+                //     ? route('pawns.apply-discount', $pawn->id)
+                //     : null,
+                'apply_discount' => Route::has('pawns.apply-discount')
+                    ? route('pawns.apply-discount', $pawn->id)
+                    : null,
             ],
+            'cancellationOptions' => $this->cancellationOptions(),
+            'paymentTypes' => $this->paymentTypes(),
         ]);
+    }
+
+    private function paymentTypes(): array
+    {
+        $types = config('core.payment_types', []);
+
+        if (! is_array($types) || count($types) === 0) {
+            $types = [
+                'cash' => 'Efectivo',
+                'card' => 'Tarjeta',
+                'transfer' => 'Transferencia',
+            ];
+        }
+
+        return collect($types)
+            ->map(fn ($label, $value) => [
+                'value' => (string) $value,
+                'label' => (string) $label,
+            ])
+            ->values()
+            ->all();
+    }
+
+    private function canApplyDiscount(Pawn $pawn): bool
+    {
+        return $pawn->auction_at === null
+            && $pawn->paid_at === null
+            && $pawn->canceled_at === null
+            && ! $pawn->hasCountersign();
+    }
+
+    private function discountPreview(Pawn $pawn): array
+    {
+        return [
+            'principal' => round((float) $pawn->total, 2),
+            'interest_original' => round((float) $pawn->interest2payminus1day, 2),
+            'amount_original' => round((float) $pawn->amount2liquidateminus1day, 2),
+            'days_to_pay' => (int) $pawn->days2payminus1,
+        ];
+    }
+
+    private function cancellationOptions(): array
+    {
+        $types = config('core.cancellation_types', []);
+       
+        if (! is_array($types) || count($types) === 0) {
+            $types = [
+                'capture_error' => 'Error de captura',
+                'client_request' => 'Solicitud del cliente',
+                'investigation' => 'Investigación',
+                'other' => 'Otro',
+            ];
+        }
+        return collect($types)
+            ->map(fn ($label, $value) => [
+                'value' => (string) $value,
+                'label' => (string) $label,
+            ])
+            ->values()
+            ->all();
     }
 
     private function formattedFolio(Pawn $pawn): string
@@ -251,22 +325,17 @@ class ShowPawnAction
 
     private function paymentPreview(Pawn $pawn): array
     {
-        $total = (float) $pawn->total;
-        $days = max(1, Carbon::parse($pawn->created_at)->diffInDays(now()) + 1);
-        $dailyRate = (float) $pawn->daily_interest_rate / 100;
-        $ivaRate = (float) $pawn->iva_rate;
-        $ivaFactor = $ivaRate > 1 ? $ivaRate / 100 : $ivaRate;
-
-        $dailyInterest = round($total * $dailyRate, 2);
-        $interest = round($dailyInterest * $days, 2);
-        $iva = round($interest * $ivaFactor, 2);
+        $interest = round((float) $pawn->interest2payminus1day, 2);
+        $iva = round((float) $pawn->getInterestIVALess1day(), 2);
 
         return [
-            'days_to_pay' => $days,
-            'daily_interest' => $dailyInterest,
+            'days_to_pay' => (int) $pawn->days2payminus1,
+            'daily_interest' => round((float) $pawn->daily_interest, 2),
             'interest_to_pay' => $interest,
             'iva_to_pay' => $iva,
-            'amount_to_liquidate' => round($total + $interest + $iva, 2),
+            'amount_to_liquidate' => round((float) $pawn->total + $interest, 2),
+            'discount_days' => method_exists($pawn, 'interestDiscountDays') ? $pawn->interestDiscountDays() : 0,
+            'discount_amount' => method_exists($pawn, 'interestDiscountAmount') ? $pawn->interestDiscountAmount(true) : 0,
         ];
     }
 
@@ -307,6 +376,7 @@ class ShowPawnAction
     {
         return match ($type) {
             'pawn' => 'Empeño',
+            'pawn_cancel' => 'Cancelación de empeño',
             'countersign', 'refrendo', 'refinance' => 'Refrendo',
             'liquidation' => 'Liquidación',
             'payment', 'payment_to_interest', 'interest_payment', 'abono_interes' => 'Abono',

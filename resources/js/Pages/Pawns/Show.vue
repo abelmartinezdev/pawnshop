@@ -1,7 +1,9 @@
 <script setup>
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import { Head, Link } from '@inertiajs/vue3'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import CancelPawnModal from '@/components/Pawns/CancelPawnModal.vue'
+import ApplyDiscountModal from '@/components/Pawns/ApplyDiscountModal.vue'
 
 const props = defineProps({
     pawn: {
@@ -12,12 +14,48 @@ const props = defineProps({
         type: Object,
         default: () => ({}),
     },
+    cancellationOptions: {
+        type: Array,
+        default: () => [],
+    },
+    paymentTypes: {
+        type: Array,
+        default: () => [],
+    },
 })
 
 const items = computed(() => props.pawn.items || [])
 const transactions = computed(() => props.pawn.transactions || [])
 const paymentOptions = computed(() => props.pawn.payment_options || [])
 const photos = computed(() => props.pawn.photos || [])
+
+const discountModalOpen = ref(false)
+
+const openDiscountModal = () => {
+    // if (!props.urls.discount_liquidation || !props.pawn.can_apply_discount) {
+    //     return
+    // }
+
+    discountModalOpen.value = true
+}
+
+const closeDiscountModal = () => {
+    discountModalOpen.value = false
+}
+
+const cancelModalOpen = ref(false)
+
+const openCancelModal = () => {
+    if (!props.urls.cancel || !props.pawn.can_cancel) {
+        return
+    }
+
+    cancelModalOpen.value = true
+}
+
+const closeCancelModal = () => {
+    cancelModalOpen.value = false
+}
 
 const money = (value) => {
     return Number(value || 0).toLocaleString('es-MX', {
@@ -642,7 +680,9 @@ const iconPath = (icon) => {
                             <button
                                 type="button"
                                 class="sicem-action-button sicem-action-danger"
-                                :disabled="pawn.is_cancelled || pawn.is_paid"
+                                :class="{ 'sicem-action-disabled': !pawn.can_cancel || !urls.cancel }"
+                                :disabled="!pawn.can_cancel || !urls.cancel"
+                                @click="openCancelModal"
                             >
                                 <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none">
                                     <path :d="iconPath('trash')" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
@@ -661,16 +701,55 @@ const iconPath = (icon) => {
                                 Sacar a remate
                             </button>
 
-                            <button
-                                type="button"
+                            <!-- <Link
+                                v-if="urls.apply_discount && pawn.can_apply_discount"
+                                :href="urls.apply_discount"
                                 class="sicem-action-button"
-                                :disabled="pawn.is_cancelled || pawn.is_paid"
                             >
                                 <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none">
-                                    <path :d="iconPath('percent')" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                                    <path
+                                        :d="iconPath('percent')"
+                                        stroke="currentColor"
+                                        stroke-width="1.8"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
                                 </svg>
                                 Aplicar descuento
-                            </button>
+                            </Link>
+
+                            <button
+                                v-else
+                                type="button"
+                                class="sicem-action-button sicem-action-disabled"
+                                disabled
+                            >
+                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none">
+                                    <path
+                                        :d="iconPath('percent')"
+                                        stroke="currentColor"
+                                        stroke-width="1.8"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+                                </svg>
+                                Aplicar descuento
+                            </button> -->
+                            <Link
+                                :href="urls.apply_discount"
+                                class="sicem-action-button"
+                            >
+                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none">
+                                    <path
+                                        :d="iconPath('percent')"
+                                        stroke="currentColor"
+                                        stroke-width="1.8"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+                                </svg>
+                                Aplicar descuento
+                            </Link>
                         </div>
                     </div>
 
@@ -781,6 +860,22 @@ const iconPath = (icon) => {
                 </aside>
             </div>
         </div>
+
+        <CancelPawnModal
+            :show="cancelModalOpen"
+            :pawn="pawn"
+            :url="urls.cancel"
+            :cancellation-options="cancellationOptions"
+            @close="closeCancelModal"
+        />
+
+        <ApplyDiscountModal
+            :show="discountModalOpen"
+            :pawn="pawn"
+            :url="urls.discount_liquidation"
+            :payment-types="paymentTypes"
+            @close="closeDiscountModal"
+        />
     </AdminLayout>
 </template>
 

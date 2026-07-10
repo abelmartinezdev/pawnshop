@@ -102,6 +102,9 @@ class ShowPawnAnticipatedDateAction
                 'show' => Route::has('pawns.show') ? route('pawns.show', $pawn->id) : null,
                 'index' => Route::has('pawns.index') ? route('pawns.index') : null,
                 'pay' => Route::has('pawns.payForm') ? route('pawns.payForm', $pawn->id) : null,
+                'print_ticket' => Route::has('pawns.print.anticipated-date')
+                ? route('pawns.print.anticipated-date', $pawn->id)
+                : null,
             ],
         ]);
     }
