@@ -703,7 +703,7 @@ const iconPath = (icon) => {
                                 Cancelar
                             </button>
 
-                            <!-- <Link
+                            <Link
                                 v-if="urls.send_to_auction && pawn.can_send_to_auction"
                                 :href="urls.send_to_auction"
                                 class="sicem-action-button sicem-action-warning"
@@ -724,17 +724,7 @@ const iconPath = (icon) => {
                                     <path :d="iconPath('hammer')" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
                                 </svg>
                                 {{ pawn.is_auctioned ? 'En remate' : 'Sacar a remate' }}
-                            </button> -->
-
-                            <Link
-                                class="sicem-action-button sicem-action-warning"
-                                :href="urls.send_to_auction"
-                            >
-                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none">
-                                    <path :d="iconPath('hammer')" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-                                </svg>
-                                Sacar a remate
-                            </Link>
+                            </button>
 
                             <Link
                                 v-if="urls.apply_discount && pawn.can_apply_discount"
