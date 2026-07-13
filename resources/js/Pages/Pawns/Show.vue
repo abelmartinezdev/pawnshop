@@ -75,6 +75,7 @@ const statusClass = computed(() => {
         pending: 'sicem-status-warning',
         expired: 'sicem-status-danger',
         paid: 'sicem-status-info',
+        auctioned: 'sicem-status-auction',
         cancelled: 'sicem-status-danger',
     }[props.pawn.status] || 'sicem-status-muted'
 })
@@ -154,7 +155,7 @@ const iconPath = (icon) => {
 
                 <div class="flex flex-col gap-3 sm:flex-row">
                     <Link
-                        v-if="urls.pay && !pawn.is_paid && !pawn.is_cancelled"
+                        v-if="urls.pay && !pawn.is_paid && !pawn.is_cancelled && !pawn.is_auctioned"
                         :href="urls.pay"
                         class="sicem-btn-green inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-black shadow-lg shadow-emerald-100 transition"
                     >
@@ -216,6 +217,18 @@ const iconPath = (icon) => {
                 </p>
                 <p class="mt-1 text-sm">
                     Liquidado el {{ pawn.paid_at }}.
+                </p>
+            </div>
+
+            <div
+                v-if="pawn.is_auctioned"
+                class="mb-6 rounded-[1.75rem] border border-amber-200 bg-amber-50 p-5 text-amber-800"
+            >
+                <p class="font-black">
+                    Este empeño ya fue enviado a remate.
+                </p>
+                <p class="mt-1 text-sm">
+                    Procesado el {{ pawn.auction_at }}. Ya no admite pagos, descuentos ni cancelación.
                 </p>
             </div>
 
@@ -539,7 +552,7 @@ const iconPath = (icon) => {
 
                         <div class="grid grid-cols-2 divide-x divide-y divide-slate-100">
                             <Link
-                              v-if="urls.pay && !pawn.is_paid && !pawn.is_cancelled"
+                              v-if="urls.pay && !pawn.is_paid && !pawn.is_cancelled && !pawn.is_auctioned"
                               :href="urls.pay"
                               class="sicem-action-button"
                           >
@@ -562,7 +575,7 @@ const iconPath = (icon) => {
                           </button>
 
                             <a
-                                v-if="urls.print_countersign && !pawn.is_paid && !pawn.is_cancelled"
+                                v-if="urls.print_countersign && !pawn.is_paid && !pawn.is_cancelled && !pawn.is_auctioned"
                                 :href="urls.print_countersign"
                                 target="_blank"
                                 class="sicem-action-button"
@@ -586,7 +599,7 @@ const iconPath = (icon) => {
                             </button>
 
                             <Link
-                                v-if="urls.date_expiration && !pawn.is_paid && !pawn.is_cancelled"
+                                v-if="urls.date_expiration && !pawn.is_paid && !pawn.is_cancelled && !pawn.is_auctioned"
                                 :href="urls.date_expiration"
                                 class="sicem-action-button"
                             >
@@ -690,18 +703,40 @@ const iconPath = (icon) => {
                                 Cancelar
                             </button>
 
-                            <button
-                                type="button"
+                            <!-- <Link
+                                v-if="urls.send_to_auction && pawn.can_send_to_auction"
+                                :href="urls.send_to_auction"
                                 class="sicem-action-button sicem-action-warning"
-                                :disabled="pawn.is_cancelled || pawn.is_paid"
                             >
                                 <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none">
                                     <path :d="iconPath('hammer')" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
                                 </svg>
                                 Sacar a remate
-                            </button>
+                            </Link>
 
-                            <!-- <Link
+                            <button
+                                v-else
+                                type="button"
+                                class="sicem-action-button sicem-action-warning sicem-action-disabled"
+                                disabled
+                            >
+                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none">
+                                    <path :d="iconPath('hammer')" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                {{ pawn.is_auctioned ? 'En remate' : 'Sacar a remate' }}
+                            </button> -->
+
+                            <Link
+                                class="sicem-action-button sicem-action-warning"
+                                :href="urls.send_to_auction"
+                            >
+                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none">
+                                    <path :d="iconPath('hammer')" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                Sacar a remate
+                            </Link>
+
+                            <Link
                                 v-if="urls.apply_discount && pawn.can_apply_discount"
                                 :href="urls.apply_discount"
                                 class="sicem-action-button"
@@ -734,22 +769,7 @@ const iconPath = (icon) => {
                                     />
                                 </svg>
                                 Aplicar descuento
-                            </button> -->
-                            <Link
-                                :href="urls.apply_discount"
-                                class="sicem-action-button"
-                            >
-                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none">
-                                    <path
-                                        :d="iconPath('percent')"
-                                        stroke="currentColor"
-                                        stroke-width="1.8"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                    />
-                                </svg>
-                                Aplicar descuento
-                            </Link>
+                            </button>
                         </div>
                     </div>
 
@@ -909,6 +929,12 @@ const iconPath = (icon) => {
     border-color: #bfdbfe !important;
     background-color: #eff6ff !important;
     color: #1d4ed8 !important;
+}
+
+.sicem-status-auction {
+    border-color: #fde68a !important;
+    background-color: #fffbeb !important;
+    color: #b45309 !important;
 }
 
 .sicem-status-muted {

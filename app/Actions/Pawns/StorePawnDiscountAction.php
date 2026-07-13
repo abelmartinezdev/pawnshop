@@ -17,9 +17,9 @@ class StorePawnDiscountAction
 {
     public function __invoke(StorePawnDiscountRequest $request, Pawn $pawn): RedirectResponse
     {
-        if (! auth()->user()?->can('apply-discount')) {
-            abort(403, 'No tienes permiso para aplicar descuentos.');
-        }
+        // if (! auth()->user()?->can('apply-discount')) {
+        //     abort(403, 'No tienes permiso para aplicar descuentos.');
+        // }
 
         try {
             DB::transaction(function () use ($request, $pawn) {
