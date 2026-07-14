@@ -25,6 +25,10 @@ const props = defineProps({
         type: Object,
         default: null,
     },
+    quotationDraft: {
+        type: Object,
+        default: null,
+    },
     filters: {
         type: Object,
         default: () => ({}),
@@ -53,18 +57,43 @@ const itemForm = reactive({
     description: '',
 })
 
+const initialQuotationItems = Array.isArray(props.quotationDraft?.items)
+    ? props.quotationDraft.items.map((item, index) => ({
+        uid: item.uid || `quotation-${item.product_id}-${index}`,
+        product_id: Number(item.product_id),
+        product_code: item.product_code || '',
+        product_name: item.product_name || '',
+        unit: item.unit || '',
+        quantity: Number(item.quantity || 0),
+        description: item.description || item.product_name || '',
+        value: Number(item.value || 0),
+        min_price: Number(item.min_price || 0),
+        max_price: Number(item.max_price || 0),
+        unit_min_price: Number(item.unit_min_price || 0),
+        unit_max_price: Number(item.unit_max_price || 0),
+    }))
+    : []
+
 const form = useForm({
     customer_id: props.selectedCustomer?.id || '',
     department_id: props.selectedDepartment?.id || '',
     beneficiary: props.selectedCustomer?.name || '',
     bag: '',
     comments: '',
-    items: [],
+    items: initialQuotationItems,
     photos: [],
 })
 
 const inputClass = 'h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#5b55a4] focus:ring-4 focus:ring-violet-100'
 const selectClass = 'h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-900 outline-none transition focus:border-[#5b55a4] focus:ring-4 focus:ring-violet-100'
+
+const hasQuotationDraft = computed(() => {
+    return Boolean(
+        props.quotationDraft
+        && props.quotationDraft.source === 'gold_quotation'
+        && Number(props.quotationDraft.department_id) === Number(selectedDepartment.value?.id)
+    )
+})
 
 const currentStep = computed(() => {
     if (!selectedCustomer.value) return 1
@@ -213,9 +242,16 @@ const selectCustomer = (customer) => {
     form.customer_id = customer.id
     form.beneficiary = customer.name || ''
 
-    router.get(route('pawns.create'), {
+    const params = {
         customer_id: customer.id,
-    }, {
+    }
+
+    if (hasQuotationDraft.value) {
+        params.department_id = selectedDepartment.value.id
+        params.from_quotation = 1
+    }
+
+    router.get(route('pawns.create'), params, {
         preserveState: true,
         preserveScroll: true,
         replace: true,
@@ -223,6 +259,10 @@ const selectCustomer = (customer) => {
 }
 
 const selectDepartment = (department) => {
+    if (Number(form.department_id) !== Number(department.id)) {
+        form.items = []
+    }
+
     selectedDepartment.value = department
     form.department_id = department.id
 
@@ -238,10 +278,24 @@ const selectDepartment = (department) => {
 
 const resetCustomer = () => {
     selectedCustomer.value = null
-    selectedDepartment.value = null
     form.customer_id = ''
-    form.department_id = ''
     form.beneficiary = ''
+
+    if (hasQuotationDraft.value) {
+        router.get(route('pawns.create'), {
+            department_id: selectedDepartment.value.id,
+            from_quotation: 1,
+        }, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        })
+
+        return
+    }
+
+    selectedDepartment.value = null
+    form.department_id = ''
     form.items = []
 
     router.get(route('pawns.create'), {}, {
@@ -476,6 +530,40 @@ const iconPath = (icon) => {
                     </svg>
                     Cancelar
                 </Link>
+            </div>
+
+            <div
+                v-if="hasQuotationDraft"
+                class="sicem-quotation-banner mb-6 rounded-[1.75rem] border p-5 shadow-sm"
+            >
+                <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div class="flex gap-3">
+                        <div class="sicem-quotation-icon flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl">
+                            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none">
+                                <path :d="iconPath('gem')" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </div>
+
+                        <div>
+                            <p class="font-black">Cotización de oro cargada</p>
+                            <p class="mt-1 text-sm font-semibold leading-6">
+                                Préstamo solicitado: {{ money(quotationDraft.total_import) }} ·
+                                Rango sugerido: {{ money(quotationDraft.suggested_minimum) }} - {{ money(quotationDraft.suggested_maximum) }}.
+                            </p>
+                            <p v-if="quotationDraft.warning" class="mt-1 text-sm font-black">
+                                {{ quotationDraft.warning }} Puedes continuar con este importe.
+                            </p>
+                            <p v-else class="mt-1 text-sm font-black">
+                                El importe se encuentra dentro del rango sugerido.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="sicem-quotation-total rounded-2xl px-5 py-3 text-right">
+                        <p class="text-[11px] font-black uppercase tracking-[0.16em]">Artículos preparados</p>
+                        <p class="mt-1 text-lg font-black">{{ form.items.length }} · {{ money(total) }}</p>
+                    </div>
+                </div>
             </div>
 
             <div class="mb-6 grid gap-4 md:grid-cols-3">
@@ -1259,5 +1347,21 @@ const iconPath = (icon) => {
 
 .sicem-total-amount {
     color: #34d399 !important;
+}
+
+.sicem-quotation-banner {
+    background-color: #fffbeb !important;
+    border-color: #fcd34d !important;
+    color: #78350f !important;
+}
+
+.sicem-quotation-icon {
+    background-color: #fef3c7 !important;
+    color: #b45309 !important;
+}
+
+.sicem-quotation-total {
+    background-color: #78350f !important;
+    color: #ffffff !important;
 }
 </style>

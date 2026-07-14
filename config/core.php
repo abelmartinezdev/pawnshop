@@ -28,4 +28,6 @@ return [
         'other' => 'Otro',
     ],
 
+    'quotation_gold_department_id' => 1,
+
 ];

@@ -32,9 +32,9 @@ const photos = computed(() => props.pawn.photos || [])
 const discountModalOpen = ref(false)
 
 const openDiscountModal = () => {
-    // if (!props.urls.discount_liquidation || !props.pawn.can_apply_discount) {
-    //     return
-    // }
+    if (!props.urls.discount_liquidation || !props.pawn.can_apply_discount) {
+        return
+    }
 
     discountModalOpen.value = true
 }
